@@ -55,5 +55,5 @@ uv sync --group dev
 Use a local clone in your MCP client:
 
 ```bash
-claude mcp add piazza --env PIAZZA_EMAIL=you@school.ca --env PIAZZA_PASSWORD=your-password -- uv --directory /path/to/piazza-mcp run piazza-mcp
+claude mcp add piazza-dev --env PIAZZA_EMAIL=you@school.ca --env PIAZZA_PASSWORD=your-password -- uv --directory /path/to/piazza-mcp run piazza-mcp
 ```
