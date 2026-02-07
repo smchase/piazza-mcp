@@ -143,7 +143,7 @@ def search_posts(
         subject = html.unescape(post_summary.get("subject", "(no subject)"))
         snippet = make_snippet(post_summary.get("content_snipet", ""))
         folders_list = ", ".join(post_summary.get("folders", []))
-        created = post_summary.get("created", post_summary.get("modified", ""))
+        modified = post_summary.get("modified", "")
         post_type = post_summary.get("type", "")
         has_i = post_summary.get("has_i")
         has_s = post_summary.get("has_s")
@@ -163,8 +163,8 @@ def search_posts(
             meta.append("Unanswered")
         if post_type:
             meta.append(f"Type: {post_type}")
-        if created:
-            meta.append(f"Date: {created}")
+        if modified:
+            meta.append(f"Date: {modified}")
         if meta:
             line += "\n" + " | ".join(meta)
         lines.append(line)
