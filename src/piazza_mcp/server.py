@@ -49,15 +49,20 @@ def list_classes() -> str:
     class name/number) to determine the right class. If it's obvious from
     context, proceed. If ambiguous, ask the user which class they mean."""
     p = _login()
-    classes = p.get_user_classes()
-    if not classes:
+    status = p.get_user_status()
+    raw_classes = status.get("networks", [])
+    if not raw_classes:
         return "No enrolled classes found."
+    # Filter to only active classes
+    active = [c for c in raw_classes if c.get("status") == "active"]
+    if not active:
+        return "No active classes found."
     lines = []
-    for c in classes:
+    for c in active:
         name = c.get("name", "Unknown")
         term = c.get("term", "")
-        num = c.get("num", "")
-        nid = c.get("nid", "")
+        num = c.get("course_number", "")
+        nid = c.get("id", "")
         line = f"- **{name}**"
         if num:
             line += f" ({num})"
@@ -95,12 +100,12 @@ def set_class(network_id: str) -> str:
     folders = feed.get("feed", {}).get("folders", [])
     _folders = folders
 
-    # Try to get class name from user classes
+    # Try to get class name from user status
     class_name = network_id
     try:
-        classes = p.get_user_classes()
-        for c in classes:
-            if c.get("nid") == network_id:
+        status = p.get_user_status()
+        for c in status.get("networks", []):
+            if c.get("id") == network_id:
                 name = c.get("name", "")
                 term = c.get("term", "")
                 class_name = f"{name} — {term}" if term else name
