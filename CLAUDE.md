@@ -88,7 +88,7 @@ Published to PyPI as `piazza-mcp`. Users install via `uvx piazza-mcp@latest` —
 
 **Release flow:**
 1. Bump `version` in `pyproject.toml`
-2. `uv build && uv publish`
+2. `rm -rf dist && uv build && uv publish`
 
 The `@latest` suffix in user configs ensures they get new versions on MCP client restart. Without it, `uvx` caches the first-resolved version indefinitely.
 
