@@ -186,7 +186,3 @@ def main():
     """Entry point for the piazza-mcp command."""
     _login()
     mcp.run()
-
-
-if __name__ == "__main__":
-    main()

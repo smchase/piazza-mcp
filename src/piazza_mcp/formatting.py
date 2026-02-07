@@ -10,11 +10,11 @@ _converter.ignore_links = False
 _converter.unicode_snob = True
 
 
-def html_to_markdown(html: str) -> str:
+def html_to_markdown(raw_html: str) -> str:
     """Convert HTML content to readable markdown."""
-    if not html:
+    if not raw_html:
         return ""
-    return _converter.handle(html).strip()
+    return _converter.handle(raw_html).strip()
 
 
 def make_snippet(text: str, max_length: int = 150) -> str:
