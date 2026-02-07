@@ -9,7 +9,7 @@ Requires [uv](https://docs.astral.sh/uv/) (`brew install uv`).
 ### Claude Code
 
 ```bash
-claude mcp add piazza --env PIAZZA_EMAIL=you@school.ca --env PIAZZA_PASSWORD=your-password -- uvx piazza-mcp@latest
+claude mcp add --scope user piazza --env PIAZZA_EMAIL=you@school.ca --env PIAZZA_PASSWORD=your-password -- uvx piazza-mcp@latest
 ```
 
 ### VS Code
