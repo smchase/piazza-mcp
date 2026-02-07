@@ -1,6 +1,7 @@
-import html2text
+import html
 import re
 
+import html2text
 
 _converter = html2text.HTML2Text()
 _converter.body_width = 0
@@ -16,42 +17,16 @@ def html_to_markdown(html: str) -> str:
     return _converter.handle(html).strip()
 
 
-def make_snippet(html: str, max_length: int = 150) -> str:
-    """Strip HTML tags, collapse whitespace, and truncate to a snippet."""
-    if not html:
+def make_snippet(text: str, max_length: int = 150) -> str:
+    """Strip HTML tags, decode entities, collapse whitespace, and truncate."""
+    if not text:
         return ""
-    text = re.sub(r"<[^>]+>", " ", html)
+    text = re.sub(r"<[^>]+>", " ", text)
+    text = html.unescape(text)
     text = re.sub(r"\s+", " ", text).strip()
     if len(text) > max_length:
         return text[:max_length].rstrip() + "..."
     return text
-
-
-def format_search_result(post: dict) -> str:
-    """Format a single post for search result display."""
-    nr = post.get("nr", "?")
-    subject = post.get("history", [{}])[0].get("subject", "(no subject)") if post.get("history") else "(no subject)"
-    content_html = post.get("history", [{}])[0].get("content", "") if post.get("history") else ""
-    snippet = make_snippet(content_html)
-    folders = ", ".join(post.get("folders", []))
-    has_i_answer = post.get("type") == "question" and bool(post.get("children", []) and any(
-        c.get("type") == "i_answer" for c in post.get("children", [])
-    ))
-    created = post.get("created", "")
-
-    lines = [f"### @{nr}: {subject}"]
-    if snippet:
-        lines.append(snippet)
-    parts = []
-    if folders:
-        parts.append(f"Folders: {folders}")
-    if has_i_answer:
-        parts.append("Has instructor answer")
-    if created:
-        parts.append(f"Date: {created}")
-    if parts:
-        lines.append(" | ".join(parts))
-    return "\n".join(lines)
 
 
 def _format_answer(child: dict, label: str) -> str:
@@ -66,8 +41,9 @@ def _format_answer(child: dict, label: str) -> str:
 
     endorsed = ""
     if child.get("tag_endorse"):
-        endorsers = child["tag_endorse"]
-        endorsed = f" (endorsed by {len(endorsers)} user{'s' if len(endorsers) != 1 else ''})"
+        count = len(child["tag_endorse"])
+        s = "s" if count != 1 else ""
+        endorsed = f" (endorsed by {count} user{s})"
 
     return f"## {label}{endorsed}\n\n{content}"
 
@@ -93,7 +69,10 @@ def format_full_post(post: dict) -> str:
     """Format a complete post with all answers and follow-ups."""
     nr = post.get("nr", "?")
     history = post.get("history", [])
-    subject = history[0].get("subject", "(no subject)") if history else "(no subject)"
+    raw_subject = (
+        history[0].get("subject", "(no subject)") if history else "(no subject)"
+    )
+    subject = html.unescape(raw_subject)
     content_html = history[0].get("content", "") if history else ""
     content = html_to_markdown(content_html)
     folders = ", ".join(post.get("folders", []))

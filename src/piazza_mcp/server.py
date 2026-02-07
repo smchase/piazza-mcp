@@ -1,10 +1,11 @@
+import html
 import os
 
 from fastmcp import FastMCP
 from piazza_api import Piazza
-from piazza_api.network import Network, FolderFilter
+from piazza_api.network import FolderFilter, Network
 
-from piazza_mcp.formatting import format_full_post
+from piazza_mcp.formatting import format_full_post, make_snippet
 
 mcp = FastMCP("piazza")
 
@@ -12,6 +13,7 @@ mcp = FastMCP("piazza")
 _piazza: Piazza | None = None
 _network: Network | None = None
 _network_id: str | None = None
+_class_name: str | None = None
 _folders: list[str] | None = None
 
 
@@ -35,9 +37,7 @@ def _login() -> Piazza:
 def _get_network() -> Network:
     """Return the active Network, or raise if none is set."""
     if _network is None:
-        raise RuntimeError(
-            "No class selected. Call set_class(network_id) first."
-        )
+        raise RuntimeError("No class selected. Call set_class(network_id) first.")
     return _network
 
 
@@ -80,13 +80,13 @@ def set_class(network_id: str) -> str:
     folder names may not match what the user calls things (e.g., 'assignment 1'
     might be folder 'hw1'). You must call this every time before using
     search_posts or get_post."""
-    global _network, _network_id, _folders
+    global _network, _network_id, _class_name, _folders
 
     p = _login()
 
     # If same class is already set, return cached state
     if _network_id == network_id and _network is not None and _folders is not None:
-        lines = [f"Class already active: **{network_id}**", "", "Available folders:"]
+        lines = [f"Active class: **{_class_name}**", "", "Available folders:"]
         for f in _folders:
             lines.append(f"- {f}")
         return "\n".join(lines)
@@ -95,23 +95,20 @@ def set_class(network_id: str) -> str:
     _network = network
     _network_id = network_id
 
-    # Fetch class info and folders from feed metadata
-    feed = network.get_feed(limit=1, offset=0)
-    folders = feed.get("feed", {}).get("folders", [])
+    # Get class name and folders from user.status — each network object has
+    # "folders" directly (the feed endpoint doesn't reliably include them)
+    status = p.get_user_status()
+    networks = status["networks"]
+    matched = [c for c in networks if c["id"] == network_id]
+    if not matched:
+        raise RuntimeError(f"network_id '{network_id}' not found in enrolled classes")
+    class_info = matched[0]
+    name = class_info.get("name", "")
+    term = class_info.get("term", "")
+    class_name = f"{name} — {term}" if term else name
+    _class_name = class_name
+    folders = class_info.get("folders", [])
     _folders = folders
-
-    # Try to get class name from user status
-    class_name = network_id
-    try:
-        status = p.get_user_status()
-        for c in status.get("networks", []):
-            if c.get("id") == network_id:
-                name = c.get("name", "")
-                term = c.get("term", "")
-                class_name = f"{name} — {term}" if term else name
-                break
-    except Exception:
-        pass
 
     lines = [f"Active class: **{class_name}**", "", "Available folders:"]
     for f in folders:
@@ -131,46 +128,42 @@ def search_posts(
     arguments to browse recent posts. Use folder names from the set_class
     response. Prefer folder filtering when looking for assignment-specific
     content since keyword search doesn't search folder names. Combine folder +
-    query to narrow within a topic."""
+    query to narrow within a topic.
+
+    IMPORTANT: Keyword search requires ALL keywords to appear in a result —
+    if any keyword is missing, the post won't match. Keep queries to 1-2 words
+    max. Use the most specific single keyword likely to appear verbatim in
+    posts. Run multiple short searches rather than one long query."""
     network = _get_network()
 
+    # search_feed returns a plain list of post dicts.
+    # get_feed and get_filtered_feed return {"feed": [...]}.
     if query and folder:
-        # Search then filter client-side by folder
         results = network.search_feed(query)
-        posts = [
-            p for p in results.get("feed", [])
-            if folder in p.get("folders", [])
-        ][:limit]
+        posts = [p for p in results if folder in p.get("folders", [])][:limit]
     elif query:
-        results = network.search_feed(query)
-        posts = results.get("feed", [])[:limit]
+        posts = network.search_feed(query)[:limit]
     elif folder:
-        results = network.get_filtered_feed(FolderFilter(folder))
-        posts = results.get("feed", [])[:limit]
+        posts = network.get_filtered_feed(FolderFilter(folder))["feed"][:limit]
     else:
-        results = network.get_feed(limit=limit, offset=0)
-        posts = results.get("feed", [])[:limit]
+        posts = network.get_feed(limit=limit, offset=0)["feed"][:limit]
 
     if not posts:
         return "No posts found."
 
-    # Feed results are partial — fetch full posts for proper formatting
     lines = [f"Found {len(posts)} post(s):", ""]
     for post_summary in posts:
         nr = post_summary.get("nr", post_summary.get("id", "?"))
-        subject = post_summary.get("subject", "(no subject)")
-        snippet = post_summary.get("content_snipet", "")  # Piazza's typo
-        if not snippet:
-            snippet = ""
+        subject = html.unescape(post_summary.get("subject", "(no subject)"))
+        snippet = make_snippet(post_summary.get("content_snipet", ""))
         folders_list = ", ".join(post_summary.get("folders", []))
         has_i_answer = bool(post_summary.get("i_answer"))
         created = post_summary.get("created", post_summary.get("modified", ""))
         post_type = post_summary.get("type", "")
 
         line = f"### @{nr}: {subject}"
-        parts = []
         if snippet:
-            parts.append(snippet[:150] + ("..." if len(snippet) > 150 else ""))
+            line += f"\n{snippet}"
         meta = []
         if folders_list:
             meta.append(f"Folders: {folders_list}")
@@ -180,9 +173,6 @@ def search_posts(
             meta.append(f"Type: {post_type}")
         if created:
             meta.append(f"Date: {created}")
-
-        if parts:
-            line += "\n" + parts[0]
         if meta:
             line += "\n" + " | ".join(meta)
         lines.append(line)
