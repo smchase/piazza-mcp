@@ -40,11 +40,12 @@ def _get_network() -> Network:
 
 @mcp.tool()
 def list_classes() -> str:
-    """Call this first to see your enrolled Piazza classes. You must then call
-    set_class with the appropriate network_id before you can search or read
-    posts. Use context clues (project directory, what the user is asking about,
-    class name/number) to determine the right class. If it's obvious from
-    context, proceed. If ambiguous, ask the user which class they mean."""
+    """Call this first to see your enrolled Piazza classes. Only active classes
+    are shown. You must then call set_class with the appropriate network_id
+    before you can search or read posts. Use context clues (project directory,
+    what the user is asking about, class name/number) to determine the right
+    class. If it's obvious from context, proceed. If ambiguous, ask the user
+    which class they mean."""
     p = _login()
     status = p.get_user_status()
     raw_classes = status.get("networks", [])
@@ -75,8 +76,7 @@ def set_class(network_id: str) -> str:
     """Select a class to work with. Must be called once before searching or
     reading posts. Returns the list of available folders — check these carefully
     since folder names may not match what the user calls things (e.g.,
-    'assignment 1' might be folder 'hw1'). You must call this every time before
-    using search_posts or get_post."""
+    'assignment 1' might be folder 'hw1')."""
     global _network
 
     p = _login()
@@ -143,9 +143,11 @@ def search_posts(
         subject = html.unescape(post_summary.get("subject", "(no subject)"))
         snippet = make_snippet(post_summary.get("content_snipet", ""))
         folders_list = ", ".join(post_summary.get("folders", []))
-        has_i_answer = bool(post_summary.get("i_answer"))
         created = post_summary.get("created", post_summary.get("modified", ""))
         post_type = post_summary.get("type", "")
+        has_i = post_summary.get("has_i")
+        has_s = post_summary.get("has_s")
+        no_answer = post_summary.get("no_answer")
 
         line = f"### @{nr}: {subject}"
         if snippet:
@@ -153,8 +155,12 @@ def search_posts(
         meta = []
         if folders_list:
             meta.append(f"Folders: {folders_list}")
-        if has_i_answer:
+        if has_i:
             meta.append("Has instructor answer")
+        if has_s:
+            meta.append("Has student answer")
+        if no_answer:
+            meta.append("Unanswered")
         if post_type:
             meta.append(f"Type: {post_type}")
         if created:
