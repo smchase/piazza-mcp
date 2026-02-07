@@ -12,9 +12,6 @@ mcp = FastMCP("piazza")
 # Global state
 _piazza: Piazza | None = None
 _network: Network | None = None
-_network_id: str | None = None
-_class_name: str | None = None
-_folders: list[str] | None = None
 
 
 def _login() -> Piazza:
@@ -75,25 +72,16 @@ def list_classes() -> str:
 
 @mcp.tool()
 def set_class(network_id: str) -> str:
-    """Select a class to work with. Must be called before searching or reading
-    posts. Returns the list of available folders — check these carefully since
-    folder names may not match what the user calls things (e.g., 'assignment 1'
-    might be folder 'hw1'). You must call this every time before using
-    search_posts or get_post."""
-    global _network, _network_id, _class_name, _folders
+    """Select a class to work with. Must be called once before searching or
+    reading posts. Returns the list of available folders — check these carefully
+    since folder names may not match what the user calls things (e.g.,
+    'assignment 1' might be folder 'hw1'). You must call this every time before
+    using search_posts or get_post."""
+    global _network
 
     p = _login()
 
-    # If same class is already set, return cached state
-    if _network_id == network_id and _network is not None and _folders is not None:
-        lines = [f"Active class: **{_class_name}**", "", "Available folders:"]
-        for f in _folders:
-            lines.append(f"- {f}")
-        return "\n".join(lines)
-
-    network = p.network(network_id)
-    _network = network
-    _network_id = network_id
+    _network = p.network(network_id)
 
     # Get class name and folders from user.status — each network object has
     # "folders" directly (the feed endpoint doesn't reliably include them)
@@ -106,9 +94,7 @@ def set_class(network_id: str) -> str:
     name = class_info.get("name", "")
     term = class_info.get("term", "")
     class_name = f"{name} — {term}" if term else name
-    _class_name = class_name
     folders = class_info.get("folders", [])
-    _folders = folders
 
     lines = [f"Active class: **{class_name}**", "", "Available folders:"]
     for f in folders:

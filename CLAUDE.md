@@ -22,7 +22,7 @@ Env vars: `PIAZZA_EMAIL`, `PIAZZA_PASSWORD`. Server calls `Piazza.user_login()` 
 
 **`list_classes()`** — Returns only **active** enrolled classes: name, term, course number, network ID. Filters out old/inactive classes via the `status` field from Piazza's `user.status` API. Does **not** show which class is currently active in the server — the agent always treats it as a fresh start and must select a class. This ensures the agent always follows the same predictable flow: list → select → search.
 
-**`set_class(network_id)`** — Idempotent. Sets the active class and returns class name/term (confirmation) plus list of all available folders/tags. Must always be called before searching. The agent doesn't know whether a class is already active, so it always calls this — which is the desired behavior. Internally, if the same class is already set, this is a cheap no-op that returns cached state.
+**`set_class(network_id)`** — Sets the active class and returns class name/term (confirmation) plus list of all available folders/tags. Called once at the start of a session before any searching. The agent doesn't know whether a class is already active, so it always calls this — which is the desired behavior.
 
 Folder names matter because naming isn't predictable — "assignment 1" might be "hw1", "a1", or "problem_set_1". The agent needs to see the actual folder names to map user intent to the right filter.
 
@@ -40,7 +40,7 @@ Returns per result: post number (`@123`), subject, snippet (~150 chars), folders
 
 The docstrings on each tool are carefully written to guide the agent's behavior. Key points embedded in descriptions:
 - `list_classes`: Agent should use context clues to pick the right class, ask user if ambiguous
-- `set_class`: Agent must call this every time before search/get_post; should check folder names carefully
+- `set_class`: Agent must call this once before search/get_post; should check folder names carefully
 - `search_posts`: Prefer folder filtering for assignment-specific content; keyword search doesn't search folder names; keyword search requires ALL keywords to match so keep queries to 1-2 words max
 - `get_post`: Use post number from search results or user reference like '@142'
 
@@ -58,9 +58,8 @@ list_classes() → sees enrolled classes (no active indicator)
 ```
 
 **What happens internally:**
-- First use: server creates a new Network connection for the class
-- Same class as before: server returns cached folders, no-op
-- Different class: server switches the active Network connection
+- `set_class` creates a Network connection and fetches class metadata from `user.status`
+- Subsequent `search_posts`/`get_post` calls use the stored Network object
 
 ## Content Formatting (`formatting.py`)
 
