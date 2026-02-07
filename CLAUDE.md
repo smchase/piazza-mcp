@@ -83,5 +83,4 @@ MVP uses `html2text` for HTML-to-markdown. The module handles:
 
 ## Future Improvements
 
-- **Better content formatting**: Write a custom HTML parser tuned to Piazza's specific HTML structure (LaTeX, @mentions, code blocks, embedded images) instead of generic html2text. Would involve dumping real post HTML and building targeted parsing rules.
 - **Better distribution**: Publish to PyPI (`uv build && uv publish`) so installation is just `uv tool install piazza-mcp` instead of cloning a repo. The `pyproject.toml` already supports this.
