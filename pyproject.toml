@@ -2,12 +2,23 @@
 name = "piazza-mcp"
 version = "0.1.0"
 description = "MCP server for browsing Piazza course forums"
+readme = "README.md"
+license = "MIT"
 requires-python = ">=3.10"
+keywords = ["mcp", "piazza", "llm"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+]
 dependencies = [
     "fastmcp",
     "piazza-api",
     "html2text",
 ]
+
+[project.urls]
+Repository = "https://github.com/smchase/piazza-mcp"
 
 [dependency-groups]
 dev = [
