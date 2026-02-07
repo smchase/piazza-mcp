@@ -81,8 +81,6 @@ def set_class(network_id: str) -> str:
 
     p = _login()
 
-    _network = p.network(network_id)
-
     # Get class name and folders from user.status — each network object has
     # "folders" directly (the feed endpoint doesn't reliably include them)
     status = p.get_user_status()
@@ -90,6 +88,8 @@ def set_class(network_id: str) -> str:
     matched = [c for c in networks if c["id"] == network_id]
     if not matched:
         raise RuntimeError(f"network_id '{network_id}' not found in enrolled classes")
+
+    _network = p.network(network_id)
     class_info = matched[0]
     name = class_info.get("name", "")
     term = class_info.get("term", "")
