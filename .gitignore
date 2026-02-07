@@ -5,4 +5,4 @@ __pycache__/
 dist/
 build/
 .env
-uv.lock
+.ruff_cache/
