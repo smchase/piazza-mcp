@@ -32,9 +32,9 @@ Folder names matter because naming isn't predictable — "assignment 1" might be
 - folder only: all posts in a specific folder
 - both: keyword search filtered to a folder (search API → client-side folder filter)
 
-Returns per result: post number (`@123`), subject, snippet (~150 chars), folders/tags, whether it has an instructor answer, date.
+Returns per result: post number (`@123`), subject, snippet (~150 chars), folders/tags, answer status (instructor/student/unanswered), type, date.
 
-**`get_post(post_number)`** — Full post content formatted as readable markdown: subject and body, instructor answer (if any), student answer (if any) with endorsement status, all follow-up discussions with replies (no truncation), folders, date, resolution status.
+**`get_post(post_number)`** — Full post content formatted as readable markdown: subject and body, instructor answer (if any), student answer (if any) with endorsement status, all follow-up discussions with replies (no truncation), folders, date.
 
 ### Agent Tool Descriptions
 
