@@ -6,11 +6,10 @@ An MCP server that lets AI agents browse a user's Piazza course forum — search
 
 ## Architecture
 
-`src/` layout with `uv` for dev and running. Three files:
+`src/` layout with `uv` for dev and running. Two source files:
 
 - `server.py` — FastMCP server with 4 tools, startup auth, class state management, tool descriptions
 - `formatting.py` — html2text wrapper, snippet generation, post/answer/followup formatting
-- `pyproject.toml` — Metadata, deps, `[project.scripts]` entry point
 
 ## Authentication
 
@@ -83,6 +82,14 @@ The module handles:
 7. `search_posts(query="extension", folder="hw1")` returns combined results
 8. `get_post(N)` returns readable markdown with all answers and followups
 
-## Future Improvements
+## Distribution
 
-- **Better distribution**: Publish to PyPI (`uv build && uv publish`) so installation is just `uv tool install piazza-mcp` instead of cloning a repo. The `pyproject.toml` already supports this.
+Published to PyPI as `piazza-mcp`. Users install via `uvx piazza-mcp@latest` — no cloning needed.
+
+**Release flow:**
+1. Bump `version` in `pyproject.toml`
+2. `uv build && uvx twine upload dist/*`
+
+The `@latest` suffix in user configs ensures they get new versions on MCP client restart. Without it, `uvx` caches the first-resolved version indefinitely.
+
+The `[project.scripts]` entry point defines the `piazza-mcp` console command used by `uvx`.
