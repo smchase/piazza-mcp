@@ -76,7 +76,7 @@ The module handles:
 
 1. `uv run piazza-mcp` starts without errors
 2. `list_classes()` returns only active enrolled courses (no active class indicator)
-3. `set_class()` returns class name + folder list (idempotent on repeat calls)
+3. `set_class()` returns class name + folder list
 4. `search_posts()` with no args returns recent feed
 5. `search_posts(folder="hw1")` returns folder-filtered results with snippets
 6. `search_posts(query="deadline")` returns keyword matches
