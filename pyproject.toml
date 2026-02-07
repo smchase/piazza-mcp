@@ -19,6 +19,7 @@ dependencies = [
 
 [project.urls]
 Repository = "https://github.com/smchase/piazza-mcp"
+Issues = "https://github.com/smchase/piazza-mcp/issues"
 
 [dependency-groups]
 dev = [
